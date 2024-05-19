@@ -22,7 +22,7 @@ var BotToken = Environment.GetEnvironmentVariable("SlashBotBotToken", Environmen
 var DiscordPublicKey = Environment.GetEnvironmentVariable("SlashBotDiscordPublicKey", EnvironmentVariableTarget.Machine);
 var SecurityId = Environment.GetEnvironmentVariable("SlashBotSecurityId", EnvironmentVariableTarget.Machine);
 
-if (String.IsNullOrEmpty(ApplicationId) || String.IsNullOrEmpty(BotToken) || String.IsNullOrEmpty(DiscordPublicKey))
+if (String.IsNullOrEmpty(ApplicationId) || String.IsNullOrEmpty(BotToken) || String.IsNullOrEmpty(DiscordPublicKey) || String.IsNullOrEmpty(SecurityId))
 {
     throw new InvalidOperationException("Missing configuration environment variables missing");
 }
