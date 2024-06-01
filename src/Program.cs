@@ -18,10 +18,10 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-var ApplicationId = Environment.GetEnvironmentVariable("SlashBotApplicationId", EnvironmentVariableTarget.Machine);
-var BotToken = Environment.GetEnvironmentVariable("SlashBotBotToken", EnvironmentVariableTarget.Machine);
-var DiscordPublicKey = Environment.GetEnvironmentVariable("SlashBotDiscordPublicKey", EnvironmentVariableTarget.Machine);
-var SecurityId = Environment.GetEnvironmentVariable("SlashBotSecurityId", EnvironmentVariableTarget.Machine);
+var ApplicationId = Environment.GetEnvironmentVariable("SlashBotApplicationId");
+var BotToken = Environment.GetEnvironmentVariable("SlashBotBotToken");
+var DiscordPublicKey = Environment.GetEnvironmentVariable("SlashBotDiscordPublicKey");
+var SecurityId = Environment.GetEnvironmentVariable("SlashBotSecurityId");
 
 if (String.IsNullOrEmpty(ApplicationId) || String.IsNullOrEmpty(BotToken) || String.IsNullOrEmpty(DiscordPublicKey) || String.IsNullOrEmpty(SecurityId))
 {
