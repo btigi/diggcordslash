@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using diggcordslash.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient();
@@ -49,7 +50,8 @@ app.MapGet("registercommand", async (string securityId, Guid identifier, string?
         {
             Name = command.Name.ToLower(),
             Description = command.Description,
-            Type = command.Type
+            Type = command.Type,
+            Options = command.Options
         };
 
         var url = $"https://discord.com/api/v10/applications/{ApplicationId}/commands";
@@ -101,7 +103,7 @@ app.MapPost("interactions", async (HttpContext context) =>
     if (command != null && command.Class != null && command.Method != null)
     {
         var instance = Activator.CreateInstance(command.Class);
-       
+
         if (instance is ICommand executableCommand)
         {
             var result = await executableCommand.Command(interaction, app.Services);
@@ -131,7 +133,7 @@ async Task<(bool isValid, Interaction interaction)> TryGetInteraction(HttpContex
     if (signature != null && long.TryParse(timestamp, out long timestampAsLong) && context.Request.ContentLength > 0)
     {
         var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
-        var interaction = JsonSerializer.Deserialize<Interaction>(body, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+        var interaction = JsonSerializer.Deserialize<Interaction>(body, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true, Converters = { new IntToStringConverter() } });
 
         if (interaction != null && IsValidDiscordSignature(signature, timestampAsLong, body))
         {
@@ -176,9 +178,10 @@ List<Command> GetCommands(bool includeReflectionInformation = true)
         {
             var nameAttributes = requiredMethod.GetCustomAttributes(typeof(CommandAttribute), false);
 
+            Command? command = null;
             if (nameAttributes.Length > 0)
             {
-                commands.Add(new Command()
+                command = new Command()
                 {
                     Name = ((CommandAttribute)nameAttributes[0]).Name,
                     Type = ((CommandAttribute)nameAttributes[0]).Type,
@@ -186,7 +189,51 @@ List<Command> GetCommands(bool includeReflectionInformation = true)
                     Identifier = ((CommandAttribute)nameAttributes[0]).Identifier,
                     Class = includeReflectionInformation ? type : null,
                     Method = includeReflectionInformation ? requiredMethod : null
-                });
+                };
+            }
+
+            var optionAttributes = requiredMethod.GetCustomAttributes(typeof(OptionAttribute), false);
+
+            if (command != null && optionAttributes.Length > 0)
+            {
+                command.Options = new diggcordslash.Model.Option[optionAttributes.Length];
+                for (int h = 0; h < optionAttributes.Length; h++)
+                {
+                    var name = ((OptionAttribute)optionAttributes[h]).Name;
+                    var paramType = ((OptionAttribute)optionAttributes[h]).Type;
+                    var description = ((OptionAttribute)optionAttributes[h]).Description;
+                    var choices = ((OptionAttribute)optionAttributes[h]).Choices;
+
+                    command.Options[h] = new diggcordslash.Model.Option()
+                    {
+                        Name = name.ToLower(),
+                        Type = (int)paramType,
+                        Description = description
+                    };
+
+                    if (choices != null)
+                    {
+                        for (int i = 0; i < choices.Length; i++)
+                        {
+                            command.Options[h].Choices = new Choice[choices.Length];
+
+                            for (int j = 0; j < choices.Length; j++)
+                            {
+                                var parts = choices[j].Split("|");
+                                command.Options[h].Choices[j] = new Choice()
+                                {
+                                    Name = parts[0],
+                                    Value = parts[1]
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (command != null)
+            {
+                commands.Add(command);
             }
         }
     }

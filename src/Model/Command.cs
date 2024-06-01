@@ -10,4 +10,5 @@ public class Command
     public Guid Identifier { get; set; }
     public MethodInfo? Method { get; set; }
     public Type? Class { get; set; }
+    public Option[]? Options { get; set; }
 }
